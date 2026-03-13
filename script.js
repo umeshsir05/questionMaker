@@ -1,486 +1,270 @@
-// Dark Mode Toggle
-const themeToggle = document.getElementById('themeToggle');
-const body = document.body;
+// [Previous code remains the same until the end, add these new functions after existing code]
 
-// Check for saved theme preference
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'dark') {
-    body.classList.add('dark-mode');
-    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-}
+// ============ NEW: Direct Question Input Functionality ============
 
-themeToggle.addEventListener('click', () => {
-    body.classList.toggle('dark-mode');
+// Parse questions from textarea
+document.getElementById('parseQuestionsBtn').addEventListener('click', function() {
+    const textarea = document.getElementById('directQuestions');
+    const questions = textarea.value.split('\n').filter(q => q.trim() !== '');
     
-    if (body.classList.contains('dark-mode')) {
-        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-        localStorage.setItem('theme', 'dark');
-    } else {
-        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', 'light');
+    const category = document.getElementById('questionCategory').value;
+    const marks = parseFloat(document.getElementById('marksPerQuestion').value) || 2;
+    const sectionName = document.getElementById('sectionName').value || 'Section A';
+    const startNumber = parseInt(document.getElementById('startNumber').value) || 1;
+    
+    // Update question count
+    document.getElementById('questionCount').value = questions.length;
+    
+    if (questions.length === 0) {
+        alert('Koi question nahi likha gaya!');
+        return;
     }
+    
+    // Display parsed questions preview
+    displayParsedQuestions(questions, category, marks, sectionName, startNumber);
 });
 
-// Mobile Menu Toggle
-const menuToggle = document.getElementById('menuToggle');
-const navLinks = document.getElementById('navLinks');
-
-menuToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('show');
+// Display parsed questions in preview
+function displayParsedQuestions(questions, category, marks, sectionName, startNumber) {
+    const previewDiv = document.getElementById('parsedPreview');
+    const listDiv = document.getElementById('parsedQuestionsList');
     
-    const icon = menuToggle.querySelector('i');
-    if (navLinks.classList.contains('show')) {
-        icon.classList.remove('fa-bars');
-        icon.classList.add('fa-times');
-    } else {
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-    }
-});
-
-// Close menu when clicking a link
-document.querySelectorAll('.nav-links a').forEach(link => {
-    link.addEventListener('click', () => {
-        navLinks.classList.remove('show');
-        const icon = menuToggle.querySelector('i');
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-    });
-});
-
-// Question Paper Maker Logic
-let questionCount = 0;
-
-// Add initial questions
-function addInitialQuestions() {
-    // Add sample questions with sub-questions
-    addQuestion('short', [
-        { text: 'What is the capital of India?', marks: 2 },
-        { text: 'Name the national bird of India.', marks: 2 }
-    ]);
-    
-    addQuestion('mcq', [
-        { text: 'Which planet is known as the Red Planet?', marks: 1, options: ['Mars', 'Venus', 'Jupiter', 'Saturn'], correct: 0 },
-        { text: 'What is the chemical symbol for water?', marks: 1, options: ['H2O', 'CO2', 'O2', 'NaCl'], correct: 0 }
-    ]);
-    
-    addQuestion('long', [
-        { text: 'Explain the process of photosynthesis.', marks: 5 },
-        { text: 'Describe the water cycle.', marks: 5 }
-    ]);
-}
-
-// Function to add a new question
-function addQuestion(type = 'short', subQuestions = []) {
-    questionCount++;
-    const container = document.getElementById('questionsContainer');
-    
-    const questionDiv = document.createElement('div');
-    questionDiv.className = 'question-item';
-    questionDiv.id = `question-${questionCount}`;
-    
-    let questionHTML = `
-        <div class="question-header">
-            <span class="question-number">Question ${questionCount}</span>
-            <div class="question-type-selector">
-                <select onchange="changeQuestionType(${questionCount}, this.value)">
-                    <option value="short" ${type === 'short' ? 'selected' : ''}>Short Answer</option>
-                    <option value="long" ${type === 'long' ? 'selected' : ''}>Long Answer</option>
-                    <option value="mcq" ${type === 'mcq' ? 'selected' : ''}>Multiple Choice Questions (MCQ)</option>
-                    <option value="very-short" ${type === 'very-short' ? 'selected' : ''}>Very Short Answer</option>
-                    <option value="fill-blanks" ${type === 'fill-blanks' ? 'selected' : ''}>Fill in the Blanks</option>
-                    <option value="true-false" ${type === 'true-false' ? 'selected' : ''}>True/False</option>
-                </select>
-                <button type="button" class="btn-remove" onclick="removeQuestion(${questionCount})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Add question input for main question (optional)
-    if (type !== 'mcq') {
-        questionHTML += `
-            <input type="text" class="question-input" placeholder="Main question (optional)..." value="Section ${questionCount}">
-        `;
-    }
-    
-    // Add sub-questions section
-    questionHTML += `
-        <div class="subquestions-section" id="subquestions-${questionCount}">
-            <div class="subquestions-header">
-                <h4><i class="fas fa-list"></i> Sub-questions</h4>
-                <button type="button" class="btn-add-subquestion" onclick="addSubQuestion(${questionCount})">
-                    <i class="fas fa-plus"></i> Add Sub-question
-                </button>
-            </div>
-            <div class="subquestions-container" id="subquestions-container-${questionCount}">
-    `;
-    
-    // Add initial sub-questions if provided
-    if (subQuestions.length > 0) {
-        subQuestions.forEach((sq, index) => {
-            if (type === 'mcq') {
-                questionHTML += generateMCQSubQuestion(questionCount, index + 1, sq);
-            } else {
-                questionHTML += generateNormalSubQuestion(questionCount, index + 1, sq);
-            }
-        });
-    } else {
-        // Add one default sub-question
-        if (type === 'mcq') {
-            questionHTML += generateMCQSubQuestion(questionCount, 1, { text: 'Sample MCQ question?', marks: 1, options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'], correct: 0 });
-        } else {
-            questionHTML += generateNormalSubQuestion(questionCount, 1, { text: 'Sample sub-question?', marks: 2 });
-        }
-    }
-    
-    questionHTML += `
-            </div>
-        </div>
-    `;
-    
-    questionDiv.innerHTML = questionHTML;
-    container.appendChild(questionDiv);
-}
-
-// Generate normal sub-question HTML
-function generateNormalSubQuestion(questionId, subId, data = {}) {
-    return `
-        <div class="subquestion-item" id="subq-${questionId}-${subId}">
-            <input type="text" placeholder="Sub-question ${subId}" value="${data.text || ''}">
-            <input type="number" class="subquestion-marks" placeholder="Marks" value="${data.marks || 2}" min="0.5" step="0.5">
-            <button type="button" class="subquestion-remove" onclick="removeSubQuestion(${questionId}, ${subId})">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-}
-
-// Generate MCQ sub-question HTML
-function generateMCQSubQuestion(questionId, subId, data = {}) {
-    let options = data.options || ['', '', '', ''];
-    let correctIndex = data.correct || 0;
-    
-    let optionsHTML = '';
-    options.forEach((opt, idx) => {
-        optionsHTML += `
-            <div class="mcq-option-item">
-                <input type="text" placeholder="Option ${idx + 1}" value="${opt}">
-                <input type="radio" name="correct-${questionId}-${subId}" value="${idx}" ${idx === correctIndex ? 'checked' : ''}>
-                <span>Correct</span>
-            </div>
-        `;
-    });
-    
-    return `
-        <div class="subquestion-item" id="subq-${questionId}-${subId}">
-            <input type="text" placeholder="MCQ Question" value="${data.text || ''}">
-            <input type="number" class="subquestion-marks" placeholder="Marks" value="${data.marks || 1}" min="0.5" step="0.5">
-            <button type="button" class="subquestion-remove" onclick="removeSubQuestion(${questionId}, ${subId})">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="mcq-options">
-                ${optionsHTML}
-            </div>
-        </div>
-    `;
-}
-
-// Change question type
-window.changeQuestionType = function(questionId, type) {
-    const container = document.getElementById(`subquestions-container-${questionId}`);
-    const subQuestions = container.querySelectorAll('.subquestion-item');
-    
-    // Convert existing sub-questions to new type
-    subQuestions.forEach((sq, index) => {
-        const subId = index + 1;
-        const text = sq.querySelector('input[type="text"]')?.value || '';
-        const marks = sq.querySelector('.subquestion-marks')?.value || 2;
-        
-        if (type === 'mcq') {
-            // Convert to MCQ
-            const mcqHTML = generateMCQSubQuestion(questionId, subId, { text, marks, options: ['', '', '', ''], correct: 0 });
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = mcqHTML;
-            sq.replaceWith(tempDiv.firstChild);
-        } else {
-            // Convert to normal sub-question
-            const normalHTML = generateNormalSubQuestion(questionId, subId, { text, marks });
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = normalHTML;
-            sq.replaceWith(tempDiv.firstChild);
-        }
-    });
-};
-
-// Add sub-question
-window.addSubQuestion = function(questionId) {
-    const container = document.getElementById(`subquestions-container-${questionId}`);
-    const subCount = container.children.length + 1;
-    
-    // Check question type
-    const questionType = document.querySelector(`#question-${questionId} select`).value;
-    
-    let subHTML;
-    if (questionType === 'mcq') {
-        subHTML = generateMCQSubQuestion(questionId, subCount, { text: '', marks: 1, options: ['', '', '', ''], correct: 0 });
-    } else {
-        subHTML = generateNormalSubQuestion(questionId, subCount, { text: '', marks: 2 });
-    }
-    
-    container.insertAdjacentHTML('beforeend', subHTML);
-};
-
-// Remove sub-question
-window.removeSubQuestion = function(questionId, subId) {
-    const subQuestion = document.getElementById(`subq-${questionId}-${subId}`);
-    if (subQuestion) {
-        subQuestion.remove();
-        // Renumber remaining sub-questions
-        renumberSubQuestions(questionId);
-    }
-};
-
-// Renumber sub-questions after removal
-function renumberSubQuestions(questionId) {
-    const container = document.getElementById(`subquestions-container-${questionId}`);
-    const subQuestions = container.querySelectorAll('.subquestion-item');
-    
-    subQuestions.forEach((sq, index) => {
-        const newId = index + 1;
-        sq.id = `subq-${questionId}-${newId}`;
-        
-        // Update remove button onclick
-        const removeBtn = sq.querySelector('.subquestion-remove');
-        removeBtn.setAttribute('onclick', `removeSubQuestion(${questionId}, ${newId})`);
-        
-        // Update radio names for MCQ
-        const radios = sq.querySelectorAll('input[type="radio"]');
-        radios.forEach(radio => {
-            radio.name = `correct-${questionId}-${newId}`;
-        });
-    });
-}
-
-// Remove main question
-window.removeQuestion = function(id) {
-    const question = document.getElementById(`question-${id}`);
-    if (question) {
-        question.remove();
-        renumberQuestions();
-    }
-};
-
-// Renumber main questions
-function renumberQuestions() {
-    const questions = document.querySelectorAll('.question-item');
-    questionCount = questions.length;
+    let html = '<div class="parsed-questions-list">';
     
     questions.forEach((question, index) => {
-        const newId = index + 1;
-        question.id = `question-${newId}`;
-        
-        // Update question number display
-        const numberSpan = question.querySelector('.question-number');
-        numberSpan.textContent = `Question ${newId}`;
-        
-        // Update remove button
-        const removeBtn = question.querySelector('.btn-remove');
-        removeBtn.setAttribute('onclick', `removeQuestion(${newId})`);
-        
-        // Update sub-question container IDs
-        const subContainer = question.querySelector('.subquestions-container');
-        if (subContainer) {
-            subContainer.id = `subquestions-container-${newId}`;
-            
-            // Update all sub-question references
-            const subQuestions = subContainer.querySelectorAll('.subquestion-item');
-            subQuestions.forEach((sq, sqIndex) => {
-                const oldId = sq.id.split('-').pop();
-                sq.id = `subq-${newId}-${sqIndex + 1}`;
-                
-                // Update remove button
-                const removeSubBtn = sq.querySelector('.subquestion-remove');
-                removeSubBtn.setAttribute('onclick', `removeSubQuestion(${newId}, ${sqIndex + 1})`);
-                
-                // Update radio names
-                const radios = sq.querySelectorAll('input[type="radio"]');
-                radios.forEach(radio => {
-                    radio.name = `correct-${newId}-${sqIndex + 1}`;
-                });
-            });
-        }
-        
-        // Update add sub-question button
-        const addSubBtn = question.querySelector('.btn-add-subquestion');
-        if (addSubBtn) {
-            addSubBtn.setAttribute('onclick', `addSubQuestion(${newId})`);
-        }
-        
-        // Update question type selector
-        const typeSelect = question.querySelector('select');
-        if (typeSelect) {
-            typeSelect.setAttribute('onchange', `changeQuestionType(${newId}, this.value)`);
-        }
+        const qNumber = startNumber + index;
+        html += `
+            <div class="parsed-question-item">
+                <span class="parsed-question-number">Q${qNumber}.</span>
+                <span class="parsed-question-text">${question}</span>
+                <span class="parsed-question-marks">${marks} marks</span>
+            </div>
+        `;
     });
+    
+    html += '</div>';
+    listDiv.innerHTML = html;
+    previewDiv.style.display = 'block';
+    
+    // Store parsed data for adding later
+    previewDiv.dataset.questions = JSON.stringify(questions);
+    previewDiv.dataset.category = category;
+    previewDiv.dataset.marks = marks;
+    previewDiv.dataset.sectionName = sectionName;
+    previewDiv.dataset.startNumber = startNumber;
 }
 
-// Add question button
-document.getElementById('addQuestionBtn').addEventListener('click', () => {
-    addQuestion('short', []);
-});
-
-// Preview functionality
-const previewBtn = document.getElementById('previewBtn');
-const previewSection = document.getElementById('previewSection');
-const closePreview = document.getElementById('closePreview');
-const paperPreview = document.getElementById('paperPreview');
-
-previewBtn.addEventListener('click', () => {
-    generatePreview();
-    previewSection.classList.add('show');
+// Add all parsed questions to paper
+document.getElementById('addAllQuestionsBtn').addEventListener('click', function() {
+    const previewDiv = document.getElementById('parsedPreview');
     
-    if (window.innerWidth <= 768) {
-        previewSection.scrollIntoView({ behavior: 'smooth' });
+    if (!previewDiv.dataset.questions) {
+        alert('Pehle questions parse karein!');
+        return;
     }
-});
-
-closePreview.addEventListener('click', () => {
-    previewSection.classList.remove('show');
-});
-
-// Generate preview
-function generatePreview() {
-    const schoolName = document.getElementById('schoolName').value;
-    const subject = document.getElementById('subject').value;
-    const className = document.getElementById('class').value;
-    const time = document.getElementById('time').value;
-    const maxMarks = document.getElementById('maxMarks').value;
-    const date = document.getElementById('date').value;
-    const instructions = document.getElementById('instructions').value;
     
-    let questionsHTML = '';
-    const questions = document.querySelectorAll('.question-item');
+    const questions = JSON.parse(previewDiv.dataset.questions);
+    const category = previewDiv.dataset.category;
+    const marks = parseFloat(previewDiv.dataset.marks);
+    const sectionName = previewDiv.dataset.sectionName;
+    const startNumber = parseInt(previewDiv.dataset.startNumber);
     
-    questions.forEach((question, qIndex) => {
-        const mainQuestionText = question.querySelector('.question-input')?.value || '';
-        const questionType = question.querySelector('select').value;
-        const typeText = question.querySelector('select option:checked').text;
+    // Add main section question
+    addQuestion(category, [], sectionName);
+    
+    // Get the newly added question
+    const questions_container = document.getElementById('questionsContainer');
+    const newQuestion = questions_container.lastElementChild;
+    
+    // Remove default sub-question
+    const subContainer = newQuestion.querySelector('.subquestions-container');
+    if (subContainer) {
+        subContainer.innerHTML = '';
+    }
+    
+    // Add all questions as sub-questions
+    questions.forEach((qText, index) => {
+        const subId = index + 1;
         
-        let questionBlock = '';
-        
-        if (mainQuestionText) {
-            questionBlock += `<p><strong>Section ${qIndex + 1}:</strong> ${mainQuestionText}</p>`;
-        }
-        
-        // Add sub-questions
-        const subQuestions = question.querySelectorAll('.subquestion-item');
-        if (subQuestions.length > 0) {
-            questionBlock += `<div style="margin-left: 20px; margin-top: 10px;">`;
-            
-            subQuestions.forEach((sub, sqIndex) => {
-                const subText = sub.querySelector('input[type="text"]')?.value || '';
-                const marks = sub.querySelector('.subquestion-marks')?.value || '';
-                
-                if (questionType === 'mcq') {
-                    // Get MCQ options
-                    const options = sub.querySelectorAll('.mcq-option-item input[type="text"]');
-                    const correctRadio = sub.querySelector('input[type="radio"]:checked');
-                    const correctIndex = correctRadio ? correctRadio.value : 0;
-                    
-                    let optionsText = '';
-                    options.forEach((opt, optIndex) => {
-                        const prefix = optIndex == correctIndex ? '✓ ' : '• ';
-                        optionsText += `<br>${prefix}${opt.value || `Option ${optIndex + 1}`}`;
-                    });
-                    
-                    questionBlock += `
-                        <div style="margin-bottom: 15px; padding: 10px; background: var(--subquestion-bg); border-radius: 5px;">
-                            <p><strong>${sqIndex + 1}.</strong> ${subText}</p>
-                            <p style="color: var(--text-secondary); font-size: 0.9rem;">[${marks} marks]</p>
-                            <div style="margin-left: 20px; font-size: 0.95rem;">Options:${optionsText}</div>
-                        </div>
-                    `;
-                } else {
-                    questionBlock += `
-                        <div style="margin-bottom: 10px;">
-                            <p><strong>${sqIndex + 1}.</strong> ${subText} <span style="color: var(--text-secondary); font-size: 0.9rem;">[${marks} marks]</span></p>
-                        </div>
-                    `;
-                }
-            });
-            
-            questionBlock += `</div>`;
-        }
-        
-        if (questionBlock) {
-            questionsHTML += `
-                <div style="margin-bottom: 25px; padding: 15px; border-left: 3px solid var(--accent-color);">
-                    <p style="font-weight: bold; margin-bottom: 10px;">Question ${qIndex + 1} (${typeText})</p>
-                    ${questionBlock}
-                </div>
-            `;
+        if (category === 'mcq') {
+            // For MCQ, add with default options
+            const mcqHTML = generateMCQSubQuestion(
+                parseInt(newQuestion.id.split('-')[1]), 
+                subId, 
+                { text: qText, marks: marks, options: ['', '', '', ''], correct: 0 }
+            );
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = mcqHTML;
+            subContainer.appendChild(tempDiv.firstChild);
+        } else {
+            // For normal questions
+            const normalHTML = generateNormalSubQuestion(
+                parseInt(newQuestion.id.split('-')[1]), 
+                subId, 
+                { text: qText, marks: marks }
+            );
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = normalHTML;
+            subContainer.appendChild(tempDiv.firstChild);
         }
     });
     
-    const previewHTML = `
-        <div style="text-align: center; margin-bottom: 30px;">
-            <h2 style="color: var(--accent-color);">${schoolName}</h2>
-            <h3>${subject} - Class ${className}</h3>
-            <div style="display: flex; justify-content: center; gap: 30px; margin-top: 10px;">
-                <p><strong>Time:</strong> ${time}</p>
-                <p><strong>Max Marks:</strong> ${maxMarks}</p>
-                <p><strong>Date:</strong> ${new Date(date).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                })}</p>
-            </div>
-        </div>
-        
-        <div style="margin-bottom: 30px; padding: 15px; background: var(--subquestion-bg); border-radius: 8px;">
-            <h4 style="color: var(--accent-color); margin-bottom: 10px;">General Instructions:</h4>
-            <p style="white-space: pre-line;">${instructions}</p>
-        </div>
-        
-        <div>
-            <h4 style="color: var(--accent-color); margin-bottom: 20px; text-align: center;">SECTION A: Answer the following questions</h4>
-            ${questionsHTML || '<p style="text-align: center;">No questions added yet.</p>'}
-        </div>
-        
-        <div style="margin-top: 40px; display: flex; justify-content: space-between;">
-            <p>_______________<br>Examiner's Signature</p>
-            <p>_______________<br>Controller of Examinations</p>
-        </div>
+    // Update question title with section name
+    const questionHeader = newQuestion.querySelector('.question-number');
+    questionHeader.textContent = `${sectionName} - Question ${document.querySelectorAll('.question-item').length}`;
+    
+    // Clear preview
+    previewDiv.style.display = 'none';
+    previewDiv.dataset.questions = '';
+    
+    // Clear textarea
+    document.getElementById('directQuestions').value = '';
+    
+    // Show success message
+    showNotification(`${questions.length} questions successfully added!`, 'success');
+});
+
+// Clear direct input
+document.getElementById('clearDirectBtn').addEventListener('click', function() {
+    document.getElementById('directQuestions').value = '';
+    document.getElementById('questionCount').value = '1';
+    document.getElementById('parsedPreview').style.display = 'none';
+    document.getElementById('parsedPreview').dataset.questions = '';
+});
+
+// Real-time question count update
+document.getElementById('directQuestions').addEventListener('input', function() {
+    const questions = this.value.split('\n').filter(q => q.trim() !== '');
+    document.getElementById('questionCount').value = questions.length || 1;
+});
+
+// ============ Helper Functions ============
+
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+        <span>${message}</span>
     `;
     
-    paperPreview.innerHTML = previewHTML;
+    // Style notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: ${type === 'success' ? '#28a745' : '#17a2b8'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
 }
 
-// Save functionality
-document.getElementById('saveBtn').addEventListener('click', () => {
-    generatePreview();
-    
-    // Calculate total marks
-    let totalMarks = 0;
-    const allMarks = document.querySelectorAll('.subquestion-marks');
-    allMarks.forEach(mark => {
-        totalMarks += parseFloat(mark.value) || 0;
-    });
-    
-    alert(`Paper saved successfully!\nTotal Questions: ${document.querySelectorAll('.question-item').length}\nTotal Sub-questions: ${document.querySelectorAll('.subquestion-item').length}\nTotal Marks: ${totalMarks}`);
-});
-
-// Handle window resize
-window.addEventListener('resize', () => {
-    if (window.innerWidth > 768) {
-        navLinks.classList.remove('show');
-        const icon = menuToggle.querySelector('i');
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
-});
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 
-// Initialize with sample questions
-addInitialQuestions();
+// ============ Enhanced Preview Generation ============
+
+// Override or enhance the existing generatePreview function
+const originalGeneratePreview = generatePreview;
+generatePreview = function() {
+    // Call original function first
+    originalGeneratePreview();
+    
+    // Add section headers in preview
+    const sections = document.querySelectorAll('.question-item');
+    let currentSection = '';
+    
+    sections.forEach((section, index) => {
+        const sectionTitle = section.querySelector('.question-number').textContent;
+        if (sectionTitle !== currentSection) {
+            currentSection = sectionTitle;
+        }
+    });
+};
+
+// ============ Example Usage Guide ============
+
+// Add example button functionality (optional)
+function addExampleQuestions() {
+    const exampleText = `What is the capital of France?
+Explain the theory of relativity in simple terms.
+Who wrote 'Hamlet'?
+What is the chemical symbol for gold?
+Define photosynthesis.
+What is the largest ocean on Earth?
+Who invented the telephone?
+What is the square root of 144?
+Name the first man on the moon.
+What is the currency of Japan?`;
+    
+    document.getElementById('directQuestions').value = exampleText;
+    document.getElementById('questionCount').value = '10';
+    document.getElementById('marksPerQuestion').value = '3';
+    document.getElementById('sectionName').value = 'General Knowledge';
+}
+
+// Optional: Add example button
+const exampleBtn = document.createElement('button');
+exampleBtn.type = 'button';
+exampleBtn.className = 'btn-example';
+exampleBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Load Example';
+exampleBtn.style.cssText = `
+    background-color: #ffc107;
+    color: #333;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 1rem;
+    font-size: 0.9rem;
+`;
+exampleBtn.onclick = addExampleQuestions;
+
+// Add example button next to section title
+const directInputSection = document.querySelector('.direct-input-section h3');
+if (directInputSection) {
+    directInputSection.appendChild(exampleBtn);
+}
