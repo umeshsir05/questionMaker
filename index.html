@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question Paper Maker | Exam Creator</title>
+    <title>Question Paper Maker | Dynamic Question Creator</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Navigation Bar (same as before) -->
+    <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-brand">
             <i class="fas fa-pen-alt"></i>
@@ -36,8 +36,8 @@
     <div class="container">
         <!-- Header Section -->
         <div class="header">
-            <h1><i class="fas fa-file-signature"></i> Question Paper Generator</h1>
-            <p>Create professional question papers for classes 5th to 12th</p>
+            <h1><i class="fas fa-file-signature"></i> Dynamic Question Paper Generator</h1>
+            <p>Create professional question papers with multiple sections and question types</p>
         </div>
 
         <!-- Question Paper Form -->
@@ -55,7 +55,7 @@
             </div>
 
             <form id="paperForm">
-                <!-- Basic Details (same as before) -->
+                <!-- Basic Details -->
                 <div class="form-row">
                     <div class="form-group">
                         <label><i class="fas fa-school"></i> School/Institute Name</label>
@@ -106,97 +106,28 @@
 3. Write your answers in the space provided.</textarea>
                 </div>
 
-                <!-- NEW: Direct Question Input Section -->
-                <div class="direct-input-section">
-                    <h3><i class="fas fa-pencil-alt"></i> Direct Question Input</h3>
-                    <p class="input-help">Ek line mein ek question likhein. Har question ke baad Enter dabayein.</p>
+                <!-- ===== NEW: Dynamic Question Sections ===== -->
+                <div class="dynamic-sections">
+                    <h3><i class="fas fa-layer-group"></i> Question Sections</h3>
+                    <p class="section-help">Har section ke liye alag se questions likhein aur marks assign karein</p>
                     
-                    <div class="direct-input-container">
-                        <textarea id="directQuestions" placeholder="Yahan apne questions likhein...
-Example:
-What is the capital of India?
-Explain the process of photosynthesis?
-Who wrote the national anthem?
-What is the chemical symbol of water?" rows="6"></textarea>
-                        
-                        <div class="question-config">
-                            <div class="config-row">
-                                <div class="form-group">
-                                    <label><i class="fas fa-tag"></i> Question Category</label>
-                                    <select id="questionCategory">
-                                        <option value="short">Short Answer</option>
-                                        <option value="long">Long Answer</option>
-                                        <option value="mcq">Multiple Choice (MCQ)</option>
-                                        <option value="very-short">Very Short Answer</option>
-                                        <option value="fill-blanks">Fill in the Blanks</option>
-                                        <option value="true-false">True/False</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label><i class="fas fa-hashtag"></i> Number of Questions</label>
-                                    <input type="number" id="questionCount" value="1" min="1" max="50" readonly>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label><i class="fas fa-coins"></i> Marks per Question</label>
-                                    <input type="number" id="marksPerQuestion" value="2" min="0.5" step="0.5">
-                                </div>
-                            </div>
-                            
-                            <div class="config-row">
-                                <div class="form-group">
-                                    <label><i class="fas fa-layer-group"></i> Section Name</label>
-                                    <input type="text" id="sectionName" placeholder="e.g., Section A, Part 1" value="Section A">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label><i class="fas fa-sort-numeric-up-alt"></i> Start from Number</label>
-                                    <input type="number" id="startNumber" value="1" min="1">
-                                </div>
-                            </div>
-                            
-                            <div class="config-actions">
-                                <button type="button" class="btn-parse" id="parseQuestionsBtn">
-                                    <i class="fas fa-magic"></i> Generate Questions
-                                </button>
-                                <button type="button" class="btn-clear" id="clearDirectBtn">
-                                    <i class="fas fa-eraser"></i> Clear
-                                </button>
-                            </div>
-                        </div>
+                    <!-- Section Container -->
+                    <div id="sectionsContainer">
+                        <!-- Sections will be added here dynamically -->
                     </div>
                     
-                    <!-- Preview of Parsed Questions -->
-                    <div class="parsed-preview" id="parsedPreview" style="display: none;">
-                        <h4><i class="fas fa-check-circle"></i> Generated Questions Preview</h4>
-                        <div id="parsedQuestionsList"></div>
-                        <button type="button" class="btn-add-all" id="addAllQuestionsBtn">
-                            <i class="fas fa-plus-circle"></i> Add All to Paper
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Questions Section (Dynamic) -->
-                <div class="questions-section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-question-circle"></i> Paper Questions</h3>
-                        <button type="button" class="btn-add" id="addQuestionBtn">
-                            <i class="fas fa-plus"></i> Add Empty Question
-                        </button>
-                    </div>
-
-                    <div id="questionsContainer">
-                        <!-- Questions will be added here dynamically -->
-                    </div>
+                    <!-- Add Section Button -->
+                    <button type="button" class="btn-add-section" id="addSectionBtn">
+                        <i class="fas fa-plus-circle"></i> Add New Section
+                    </button>
                 </div>
             </form>
         </div>
 
-        <!-- Preview Section (same as before) -->
+        <!-- Preview Section -->
         <div class="preview-section" id="previewSection">
             <div class="preview-header">
-                <h2><i class="fas fa-file-pdf"></i> Preview</h2>
+                <h2><i class="fas fa-file-pdf"></i> Question Paper Preview</h2>
                 <button class="btn-close-preview" id="closePreview">
                     <i class="fas fa-times"></i>
                 </button>
@@ -207,9 +138,9 @@ What is the chemical symbol of water?" rows="6"></textarea>
         </div>
     </div>
 
-    <!-- Footer (same as before) -->
+    <!-- Footer -->
     <footer>
-        <p>© 2025 QPaper Maker. All rights reserved.</p>
+        <p>© 2025 Dynamic Question Paper Maker. All rights reserved.</p>
     </footer>
 
     <script src="script.js"></script>
